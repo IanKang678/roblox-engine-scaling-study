@@ -1,10 +1,12 @@
 # Roblox Engine Performance Scaling Study
 
+This started from a production problem: a Roblox server with a suspected memory leak and no idea where its capacity ceiling was. I built the instrumentation to find out.
+
 ## Question
 How does the server frame time scale with the live bullet count, when does the server slow, and does server memory grow unbounded?
 
 ## Method
-A load generator which loads a certain number of bullets, and a telemetry probe was built in Luau. Measurement happened across three different passes, one server per pass. During each pass, ten load levels of bullets (from 2000 to 20000) were each measured per frame for 60 seconds. This totaled in about 215000 frame samples. While measuring frame samples, memory was also measured per second. In addition, another ten minute session happened where a load of 5000 bullets were held constantly for eight minutes, and a load of 0 for the last two minutes. Again, memory was measured per second, and frame time was measured per frame.
+A load generator which loads a certain number of bullets, and a telemetry probe was built in Luau. Measurement happened across three different passes, one server per pass. During each pass, ten load levels of bullets (from 2000 to 20000) were each measured per frame for 60 seconds. This totaled in about 215000 frame samples. While measuring frame samples, memory was also measured per second. Load levels ran in ascending order within each pass, and the lowest level was re-run at the end as a recheck — if anything accumulated over the pass, it would show up as the lowest level reading slower the second time. In addition, another ten minute session happened where a load of 5000 bullets were held constantly for eight minutes, and a load of 0 for the last two minutes. Again, memory was measured per second, and frame time was measured per frame.
 
 ## Findings
 
@@ -20,7 +22,7 @@ Roblox allocates server CPU dynamically based on player count, so a solo server 
 ![p95 frame time across three servers](plots/three_pass_comparison.png)
 
 ### Memory
-Server memory did not drift at a constant load, and there was no instance retention (bullets were pure luau tables). Each bullet contributed to about 1.7 kb of server memory. The suspected unbounded growth did not appear.
+Server memory did not drift at a constant load, and there was no instance retention (bullets were pure luau tables). Each bullet contributed to about 1.7 kb of server memory. The suspected unbounded growth did not appear at the sensitivity this test could reach — see Limitation 4 for what that sensitivity is.
 
 ![Memory above idle baseline vs bullet count](plots/memory_vs_load.png)
 
